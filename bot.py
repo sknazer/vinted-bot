@@ -13,7 +13,6 @@ ANTHROPIC_KEY = os.environ["ANTHROPIC_KEY"]
 
 intents = discord.Intents.default()
 intents.message_content = True
-intents.dm_messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
