@@ -20,26 +20,13 @@ claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 
 def ameliorer_photo(image_bytes):
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-
-    # Redresse et agrandit si trop petite
     max_size = (1200, 1200)
     img.thumbnail(max_size, Image.LANCZOS)
-
-    # Améliore la luminosité
     img = ImageEnhance.Brightness(img).enhance(1.15)
-
-    # Améliore le contraste
     img = ImageEnhance.Contrast(img).enhance(1.2)
-
-    # Améliore la netteté
     img = ImageEnhance.Sharpness(img).enhance(2.0)
-
-    # Améliore les couleurs
     img = ImageEnhance.Color(img).enhance(1.3)
-
-    # Légère réduction du bruit
     img = img.filter(ImageFilter.SMOOTH_MORE)
-
     output = io.BytesIO()
     img.save(output, format="JPEG", quality=95)
     output.seek(0)
@@ -114,7 +101,6 @@ async def on_ready():
 
 @bot.tree.command(name="vinted", description="Envoie une photo pour créer ta fiche Vinted")
 async def vinted(interaction: discord.Interaction, photo: discord.Attachment):
-    # Vérifie que c'est bien une image
     if not photo.content_type or not photo.content_type.startswith("image/"):
         await interaction.response.send_message("❌ Envoie une image (JPG, PNG...)", ephemeral=True)
         return
@@ -122,25 +108,17 @@ async def vinted(interaction: discord.Interaction, photo: discord.Attachment):
     await interaction.response.defer(thinking=True)
 
     try:
-        # Télécharge la photo
         async with aiohttp.ClientSession() as session:
             async with session.get(photo.url) as resp:
                 image_bytes = await resp.read()
 
-        # Améliore la photo
         photo_amelioree = ameliorer_photo(image_bytes)
-
-        # Encode en base64 pour Claude
         image_base64 = base64.standard_b64encode(photo_amelioree.read()).decode("utf-8")
         photo_amelioree.seek(0)
 
-        # Analyse avec Claude
         analyse = analyser_avec_claude(image_base64)
-
-        # Formate la fiche
         embed = formater_fiche(analyse)
 
-        # Envoie la photo améliorée + la fiche
         fichier = discord.File(photo_amelioree, filename="photo_amelioree.jpg")
         await interaction.followup.send(
             content="📸 **Photo améliorée :**",
